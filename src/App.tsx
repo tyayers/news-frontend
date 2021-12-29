@@ -1,25 +1,29 @@
 import React from 'react';
+import { useEffect, useState } from 'react';
+import { News } from './news-objects';
 import logo from './logo.svg';
 import './App.css';
 
 function App() {
+
+  const [news, setNews] = useState("loading...")
+  const newsUrl = "https://storage.googleapis.com/planetapi/news/current-news.json";
+
+  useEffect(() => {
+    fetch(newsUrl)
+      .then(response => response.json())
+      .then(data => {
+        
+        let news: News = data as News;
+        
+        setNews(JSON.stringify(news.locations));
+    });
+  });
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <h1 className="text-3xl font-bold underline">
+      {news}
+    </h1>
   );
 }
 
