@@ -35,3 +35,7 @@ interface Article {
   tags: string[];
   location: string;
 }
+
+export interface TagNews {
+  articlesByTag: Record<string, Article[]>;
+}
