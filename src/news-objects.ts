@@ -22,7 +22,7 @@ interface Geo {
   lng: string;
 }
 
-interface Article {
+export interface Article {
   source: string;
   region: string;
   language: string;
@@ -36,6 +36,6 @@ interface Article {
   location: string;
 }
 
-export interface TagNews {
-  articlesByTag: Record<string, Article[]>;
+export class TagNews {
+  articlesByTag: Record<string, Article[]> = {};
 }
