@@ -6,48 +6,70 @@ import './App.css';
 
 function App() {
 
-  const [news, setNews] = useState("loading...");
+  const [news, setNews] = useState("");
+  const [newsFetched, setNewsFetched] = useState(false);
+
   const [newsByTag, setNewsByTag] = useState(new TagNews());
-  const [tags, setTags] = useState(["test1", "test2"]);
+
+  const [page, setPage] = useState("topics");
+  const [randomIndex, setRandomIndex] = useState(0);
 
   const newsUrl = "https://storage.googleapis.com/planetapi/news/current-news.json";
 
   useEffect(() => {
-    fetch(newsUrl)
-      .then(response => response.json())
-      .then(data => {
+    if (!newsFetched) {
+      setNewsFetched(true);
 
-        let news: News = data as News;
+      fetch(newsUrl)
+        .then(response => response.json())
+        .then(data => {
+          
+          let news: News = data as News;
+          setNews(JSON.stringify(news));
 
-        let tagNews: TagNews = new TagNews();
-        let newTags = [];
-        for (var artIndex in news.articles) {
-          let article = news.articles[artIndex];
+          let tagNews: TagNews = new TagNews();
+          let newTags = [];
+          for (var artIndex in news.articles) {
+            let article = news.articles[artIndex];
 
-          for (var tagIndex in article.tags) {
-            if (!tagNews.articlesByTag[article.tags[tagIndex]]) {
-              // We don't have this tag, create...
-              tagNews.articlesByTag[article.tags[tagIndex]] = [];
-              newTags.push(article.tags[tagIndex]);
+            for (var tagIndex in article.tags) {
+              if (! article.tags[tagIndex].startsWith("’")) {
+                if (!tagNews.articlesByTag[article.tags[tagIndex]]) {
+                  // We don't have this tag, create...
+                  tagNews.articlesByTag[article.tags[tagIndex]] = [];
+                  newTags.push(article.tags[tagIndex]);
+                }
+
+                tagNews.articlesByTag[article.tags[tagIndex]].push(article);
+              }
             }
-
-            tagNews.articlesByTag[article.tags[tagIndex]].push(article);
           }
-        }
 
-        // Sort tags
-        tagNews.articlesByTag = Object.keys(tagNews.articlesByTag).sort().reduce(
-          (obj: Record<string, Article[]>, key) => {
-            obj[key] = tagNews.articlesByTag[key];
-            return obj;
-          },
-          {}
-        ) as Record<string, Article[]>;
+          // Sort tags
+          tagNews.articlesByTag = Object.keys(tagNews.articlesByTag).sort().reduce(
+            (obj: Record<string, Article[]>, key) => {
+              obj[key] = tagNews.articlesByTag[key];
+              return obj;
+            },
+            {}
+          ) as Record<string, Article[]>;
 
-        setNewsByTag(tagNews);
-        setNews(JSON.stringify(news.locations));
-      });
+          setNewsByTag(tagNews);
+        });
+      }
   });
+
+  function getLinkIndex(index: number): number {
+    if (index > 0)
+      return index-1;
+    else
+      return 0;
+  }
+
+  function setRandom() {
+    setRandomIndex(Math.floor(Math.random() * (Object.keys(newsByTag.articlesByTag).length - 1)));
+    setPage("random");
+  }
 
   return (
     <div>
@@ -63,7 +85,7 @@ function App() {
                   <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
                 </svg>
               </button>
-              <a href="https://demo.themesberg.com/windster/" className="text-xl font-bold flex items-center lg:ml-2.5">
+              <a href="#" onClick={() => {setRandom()}} className="text-xl font-bold flex items-center lg:ml-2.5">
                 {/* <h4>C10X News</h4> */}
                 <img src="https://demo.themesberg.com/windster/images/logo.svg" className="h-6 mr-2" alt="Windster Logo" />
                 <span className="self-center whitespace-nowrap">C10X News</span>
@@ -122,18 +144,22 @@ function App() {
                       </div>
                     </form>
                   </li>
-                  {Object.keys(newsByTag.articlesByTag).map((value: string, i: number) => {
-                    return (
-                      <li>
-                        <a href={"#" + value} className="text-base text-gray-900 font-normal rounded-lg flex items-center p-2 hover:bg-gray-100 group">
-                          <svg className="w-6 h-6 text-gray-500 flex-shrink-0 group-hover:text-gray-900 transition duration-75" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
-                          </svg>
-                          <span className="ml-3">{value.charAt(0).toUpperCase() + value.slice(1)}</span>
-                        </a>
-                      </li>
-                    )
-                  })}
+                  <li>
+                    <a href="#" onClick={() => setPage("topics")} className="text-base text-gray-900 font-normal rounded-lg flex items-center p-2 hover:bg-gray-100 group">
+                      <svg className="w-6 h-6 text-gray-500 flex-shrink-0 group-hover:text-gray-900 transition duration-75" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                      </svg>
+                      <span className="ml-3">Topics</span>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#" onClick={() => setRandom()} className="text-base text-gray-900 font-normal rounded-lg flex items-center p-2 hover:bg-gray-100 group">
+                      <svg className="w-6 h-6 text-gray-500 flex-shrink-0 group-hover:text-gray-900 transition duration-75" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                      </svg>
+                      <span className="ml-3">Random</span>
+                    </a>
+                  </li>                  
                 </ul>
               </div>
             </div>
@@ -141,38 +167,69 @@ function App() {
         </aside>
         <div className="bg-gray-900 opacity-50 hidden fixed inset-0 z-10" id="sidebarBackdrop"></div>
       </div>
-      <div className="h-full bg-gray-50 relative overflow-y-auto lg:ml-64">
-        <div>
-          {Object.keys(newsByTag.articlesByTag).map((value: string, i: number) => {
-            return (
-              <div key={i}>
-                <h1 id={value} className="m-3 font-bold text-gray-600">{value.charAt(0).toUpperCase() + value.slice(1)}</h1>
-                <div>
-                  {newsByTag.articlesByTag[value].map((article: Article) => {
-                    return (
-                      <a href={article.link} target="_blank">
-                        <div className="inline-block max-w-xs bg-white rounded-xl p-5 shadow-2xl m-2">
-                          <p> {article.title} </p>
-                          <div className='mt-5 flex items-center'>
-                            <img src={article.icon} className='w-10 rounded-full' />
-                            <div className="ml-3">
-                              <h3 className="font-semibold"> {article.source} </h3>
-                              <p className="text-gray-500"> {article.location} </p>
+      {page == "topics" &&
+        <div className="h-full bg-gray-50 relative overflow-y-auto lg:ml-64 text-center">
+          <div>
+            {Object.keys(newsByTag.articlesByTag).map((value: string, i: number) => {
+              return (
+                <div key={i}>
+                  <h1 id={value}></h1>
+                  <h1 className="m-3 font-bold text-gray-600 text-left">{value.toUpperCase()}</h1>
+                  <div>
+                    {newsByTag.articlesByTag[value].map((article: Article) => {
+                      return (
+                        <a href={article.link} target="_blank">
+                          <div className="inline-block max-w-xs bg-white rounded-xl p-5 shadow-2xl m-2 text-left">
+                            <p> {article.title} </p>
+                            <div className='mt-5 flex items-center'>
+                              <img src={article.icon} className='w-10 rounded-full' />
+                              <div className="ml-3">
+                                <h3 className="font-semibold"> {article.source} </h3>
+                                <p className="text-gray-500"> {article.location} </p>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </a>
-                    )
-                  }
-                  )}
+                        </a>
+                      )
+                    }
+                    )}
+                  </div>
                 </div>
-              </div>
-            )
-          }
-          )}
+              )
+            }
+            )}
+          </div>
         </div>
+      }
+      {(page == "random" && Object.keys(newsByTag.articlesByTag).length > 0) &&
+        <div className="h-full pb-20 relative overflow-y-auto lg:ml-64 text-center">
+          <div>
+            <h1 className="m-3 font-bold text-gray-600 text-left">{Object.keys(newsByTag.articlesByTag)[randomIndex].toUpperCase()}</h1>
+            <div>
+              {newsByTag.articlesByTag[Object.keys(newsByTag.articlesByTag)[randomIndex]].map((article: Article) => {
+                return (
+                  <a href={article.link} target="_blank">
+                    <div className="inline-block max-w-xs bg-white rounded-xl p-5 shadow-2xl m-2 text-left">
+                      <p> {article.title} </p>
+                      <div className='mt-5 flex items-center'>
+                        <img src={article.icon} className='w-10 rounded-full' />
+                        <div className="ml-3">
+                          <h3 className="font-semibold"> {article.source} </h3>
+                          <p className="text-gray-500"> {article.location} </p>
+                        </div>
+                      </div>
+                    </div>
+                  </a>
+                )
+              }
+              )}
+            </div>
+          </div>
+        </div>
+      }
 
-      </div>
+      <div onClick={() => setRandom()} className='bg-red-600 fixed bottom-5 text-lg right-5 hover:bg-red-700 hover:cursor-pointer text-white text-sm px-4 py-2 border rounded-full'>RANDOM TOPIC</div>
+
     </div>
   );
 }
